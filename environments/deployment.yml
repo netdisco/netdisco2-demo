@@ -2,6 +2,8 @@
 # NETDISCO 2 CONFIGURATION FILE
 #
 
+database: {}
+
 host_groups:
   spines:
     - 192.168.0.21
