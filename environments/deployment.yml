@@ -1,0 +1,24 @@
+#
+# NETDISCO 2 CONFIGURATION FILE
+#
+
+host_groups:
+  spines:
+    - 192.168.0.21
+    - 192.168.0.22
+  leaves:
+    - 192.168.0.11
+    - 192.168.0.12
+    - 192.168.0.13
+    - 192.168.0.14
+
+host_group_displaynames:
+  spines: 'Spine Routers'
+  leaves: 'Leaf Routers'
+
+# disable authentication/login.
+no_auth: true
+check_userlog: false
+
+# disable user account actions and device delete
+defanged_admin: 'false_admin'
