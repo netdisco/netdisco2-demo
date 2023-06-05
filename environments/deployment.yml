@@ -28,3 +28,4 @@ check_userlog: false
 
 # disable user account actions and device delete
 defanged_admin: 'false_admin'
+defanged_api_admin: 'false_api_admin'
