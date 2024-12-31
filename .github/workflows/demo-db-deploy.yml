@@ -23,7 +23,7 @@ jobs:
     - name: Install base packages
       run: apk add tmux bash curl sudo xz
     - name: Install packages
-      run: apk add openssh-client gcc make musl-dev musl-obstack-dev python3 perl-dev unzip
+      run: apk add openssh-client gcc make musl-dev musl-obstack-dev python3 perl-dev unzip gzip
     - name: Install fake apt-get
       run: echo 'if [ "$1" == "update" ]; then exec apk update; else exec apk add openssh-client xz; fi' > /usr/local/bin/apt-get && chmod +x /usr/local/bin/apt-get
 
@@ -48,13 +48,14 @@ jobs:
       run: |
         curl -LO https://github.com/netdisco/netdisco2-demo/raw/master/netdisco2-demo-cumulus-clean.db.sql
         curl -LO https://raw.githubusercontent.com/netdisco/upstream-sources/refs/heads/master/bootstrap/netdisco-lookup-tables.sql
-        curl -LO https://github.com/netdisco/netdisco2-demo/raw/master/netdisco2-demo-snmp-object-data.bin
+        curl -LO https://github.com/netdisco/netdisco2-demo/raw/master/netdisco2-demo-snmp-object-data.sql.gz
         psql -c "DROP OWNED BY $PGUSER CASCADE"
         psql -c "CREATE SCHEMA public"
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-cumulus-clean.db.sql
         /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-db-deploy
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco-lookup-tables.sql
-        pg_restore -x -O -1 -d ${{ env.PGDATABASE }} netdisco2-demo-snmp-object-data.bin
+        gunzip netdisco2-demo-snmp-object-data.sql.gz
+        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-snmp-object-data.sql
         /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do stats -D
 
     - name: Setup tmate session
