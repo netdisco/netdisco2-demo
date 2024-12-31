@@ -47,16 +47,16 @@ jobs:
 
     - name: Update schema
       env:
-        NETDISCO_HOME: /github/workspace/netdisco2-demo/netdisco2-demo
+        NETDISCO_HOME: /home/netdisco
         POETRY_CACHE_DIR: /home/netdisco/python/cache/pypoetry
         NETDISCO_DB_USER: ${{ secrets.DEMO_PGUSER }}
         NETDISCO_DB_PASS: ${{ secrets.DEMO_PGPASSWORD }}
         NETDISCO_DB_HOST: ${{ secrets.DEMO_PGHOST }}
         NETDISCO_DB_NAME: ${{ secrets.DEMO_PGDATABASE }}
       run: |
-        /home/netdisco/bin/localenv /github/workspace/netdisco/netdisco/bin/netdisco-db-deploy
-        /home/netdisco/bin/localenv /github/workspace/netdisco/netdisco/bin/netdisco-do stats -D
-        /home/netdisco/bin/localenv /github/workspace/netdisco/netdisco/bin/netdisco-do loadmibs -D
+        /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-db-deploy
+        /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do stats -D
+        /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do loadmibs -D
 
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
