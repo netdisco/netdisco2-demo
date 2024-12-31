@@ -39,14 +39,6 @@ jobs:
         PGPASSWORD: ${{ secrets.DEMO_PGPASSWORD }}
         PGHOST:     ${{ secrets.DEMO_PGHOST }}
         PGDATABASE: ${{ secrets.DEMO_PGDATABASE }}
-      run: |
-        psql -c "DROP OWNED BY $PGUSER CASCADE"
-        psql -c "CREATE SCHEMA public"
-        curl -LO https://github.com/netdisco/netdisco2-demo/raw/master/netdisco2-demo-cumulus-clean.db.sql
-        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-cumulus-clean.db.sql
-
-    - name: Update schema
-      env:
         NETDISCO_HOME: /home/netdisco
         POETRY_CACHE_DIR: /home/netdisco/python/cache/pypoetry
         NETDISCO_DB_USER: ${{ secrets.DEMO_PGUSER }}
@@ -54,9 +46,16 @@ jobs:
         NETDISCO_DB_HOST: ${{ secrets.DEMO_PGHOST }}
         NETDISCO_DB_NAME: ${{ secrets.DEMO_PGDATABASE }}
       run: |
+        curl -LO https://github.com/netdisco/netdisco2-demo/raw/master/netdisco2-demo-cumulus-clean.db.sql
+        curl -LO https://raw.githubusercontent.com/netdisco/upstream-sources/refs/heads/master/bootstrap/netdisco-lookup-tables.sql
+        curl -LO https://github.com/netdisco/netdisco2-demo/raw/master/netdisco2-demo-snmp-object-data.bin
+        psql -c "DROP OWNED BY $PGUSER CASCADE"
+        psql -c "CREATE SCHEMA public"
+        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-cumulus-clean.db.sql
         /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-db-deploy
+        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco-lookup-tables.sql
+        pg_restore -x -O -1 -d ${{ env.PGDATABASE }} netdisco2-demo-snmp-object-data.bin
         /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do stats -D
-        /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do loadmibs -D
 
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
