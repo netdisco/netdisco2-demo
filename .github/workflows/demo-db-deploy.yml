@@ -58,9 +58,9 @@ jobs:
         /home/netdisco/bin/localenv /github/workspace/netdisco/netdisco/bin/netdisco-do stats -D
         /home/netdisco/bin/localenv /github/workspace/netdisco/netdisco/bin/netdisco-do loadmibs -D
 
-#    - name: Setup tmate session
-#      uses: mxschmitt/action-tmate@v3
-#      if: always() && github.event.inputs.debug_dbdeploy_enabled == 'true'
-#      with:
-#        sudo: true
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: always() && github.event.inputs.debug_enabled == 'true'
+      with:
+        sudo: true
 
