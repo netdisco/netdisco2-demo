@@ -61,6 +61,6 @@ jobs:
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
       if: always() && github.event.inputs.debug_enabled == 'true'
-      with:
-        sudo: true
+      #with:
+      #  sudo: true
 
