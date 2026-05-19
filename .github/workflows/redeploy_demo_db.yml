@@ -1,0 +1,110 @@
+name: Redeploy Demo Database
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'With build debug'
+        required: false
+        default:  false
+jobs:
+  redeploy_demo_db:
+    name: Redeploy Demo DB
+    runs-on: ubuntu-latest
+    container:
+      image: 'netdisco/netdisco:latest-backend'
+      options: '--user root --entrypoint /bin/ash'
+      volumes:
+        - '/home/runner/work:/github/workspace'
+    defaults:
+      run:
+        working-directory: /github/workspace/netdisco2-demo/netdisco2-demo
+    steps:
+    - name: Install packages
+      run: apk add curl gzip sudo
+
+    - name: Check out latest code
+      uses: actions/checkout@v1
+
+    - name: Fix owner of checkout
+      run: chown -R netdisco:netdisco /github/workspace/netdisco2-demo/netdisco2-demo
+
+    - name: Add IP address as trusted source (managed database)
+      uses: rachelallyson/add-ip-to-digital-ocean-database@v1.0
+      with:
+        action: "add"
+        database_id: ${{ secrets.DIGITALOCEAN_DEMO_DB_ID }}
+        digitalocean_token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - name: Download db content
+      run: |
+        curl -LO https://raw.githubusercontent.com/netdisco/netdisco2-demo/refs/heads/master/netdisco2-demo-cumulus-clean.db.sql
+        curl -LO https://raw.githubusercontent.com/netdisco/upstream-sources/refs/heads/master/bootstrap/netdisco-lookup-tables.sql
+        curl -LO https://raw.githubusercontent.com/netdisco/netdisco2-demo/refs/heads/master/netdisco2-demo-snmp-object-data.sql.gz
+        gunzip netdisco2-demo-snmp-object-data.sql.gz
+
+    - name: Upload cumulus demo
+      env:
+        PGUSER:     ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        PGPASSWORD: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        PGHOST:     ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        PGPORT:     ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        PGDATABASE: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
+      run: |
+        psql -c "DROP OWNED BY $PGUSER CASCADE"
+        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-cumulus-clean.db.sql
+
+    - name: Update schema
+      env:
+        NETDISCO_HOME: /github/workspace/netdisco2-demo/netdisco2-demo
+        NETDISCO_DB_USER: ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        NETDISCO_DB_PASS: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        NETDISCO_DB_HOST: ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        NETDISCO_DB_PORT: ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        NETDISCO_DB_NAME: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
+      run: |
+        /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-db-deploy
+
+    - name: Upload IANA/IEEE tables
+      env:
+        PGUSER:     ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        PGPASSWORD: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        PGHOST:     ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        PGPORT:     ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        PGDATABASE: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
+      run: |
+        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco-lookup-tables.sql
+
+    - name: Upload SNMP Objects
+      env:
+        PGUSER:     ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        PGPASSWORD: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        PGHOST:     ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        PGPORT:     ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        PGDATABASE: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
+      run: |
+        psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-snmp-object-data.sql
+
+    - name: Update statistics
+      env:
+        NETDISCO_HOME: /github/workspace/netdisco2-demo/netdisco2-demo
+        NETDISCO_DB_USER: ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        NETDISCO_DB_PASS: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        NETDISCO_DB_HOST: ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        NETDISCO_DB_PORT: ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        NETDISCO_DB_NAME: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
+      run: |
+        rm /tmp/uv* && /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do stats -D
+
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: always() && github.event.inputs.debug_enabled == 'true'
+      with:
+        sudo: true
+
+    - name: Remove IP address as trusted source (managed database)
+      uses: rachelallyson/add-ip-to-digital-ocean-database@v1.0
+      with:
+        action: "remove"
+        database_id: ${{ secrets.DIGITALOCEAN_DEMO_DB_ID }}
+        digitalocean_token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}

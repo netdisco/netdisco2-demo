@@ -1,0 +1,46 @@
+name: Build Demo Container
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'With build debug'
+        required: false
+        default:  false
+jobs:
+  build_demo_container:
+    name: Build Container Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install packages
+        run: apk add curl gzip sudo
+
+      - name: Check out latest dockerfiles
+        uses: actions/checkout@v1
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Build netdisco-demo container image
+        run: |
+          cd docker
+          docker build --tag registry.digitalocean.com/netdisco-demo-webonly/demo:latest .
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push registry.digitalocean.com/netdisco-demo-webonly/demo:latest
+
+      - name: Logout from DigitalOcean
+        run: docker logout
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: always() && github.event.inputs.debug_enabled == 'true'
+        with:
+          sudo: true
+
