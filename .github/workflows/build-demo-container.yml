@@ -13,9 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install packages
-        run: apk add curl gzip sudo
-
       - name: Check out latest dockerfiles
         uses: actions/checkout@v1
 
