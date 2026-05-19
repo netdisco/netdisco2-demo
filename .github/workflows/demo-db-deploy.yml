@@ -10,7 +10,6 @@ on:
 jobs:
   demo_db_redeploy:
     name: Redeploy Demo DB
-    # needs: build_docker_images
     runs-on: ubuntu-latest
     container:
       image: 'netdisco/netdisco:latest-backend'
@@ -52,11 +51,11 @@ jobs:
         psql -c "DROP OWNED BY $PGUSER CASCADE"
         psql -c "CREATE SCHEMA public"
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-cumulus-clean.db.sql
-        /home/netdisco/bin/localenv /github/workspace/netdisco2-demo/netdisco2-demo/bin/netdisco-db-deploy
+        /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-db-deploy
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco-lookup-tables.sql
         gunzip netdisco2-demo-snmp-object-data.sql.gz
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-snmp-object-data.sql
-        rm /tmp/uv* && /home/netdisco/bin/localenv /github/workspace/netdisco2-demo/netdisco2-demo/bin/netdisco-do stats -D
+        rm /tmp/uv* && /home/netdisco/bin/localenv /home/netdisco/bin/netdisco-do stats -D
 
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
