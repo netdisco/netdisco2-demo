@@ -57,7 +57,6 @@ jobs:
         PGDATABASE: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
       run: |
         psql -c "DROP OWNED BY $PGUSER CASCADE"
-        psql -c "CREATE SCHEMA public"
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-cumulus-clean.db.sql
 
     - name: Update schema
