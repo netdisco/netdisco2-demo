@@ -35,15 +35,17 @@ jobs:
 
     - name: Download and upload db content
       env:
-        PGUSER:     ${{ secrets.DEMO_PGUSER }}
-        PGPASSWORD: ${{ secrets.DEMO_PGPASSWORD }}
-        PGHOST:     ${{ secrets.DEMO_PGHOST }}
-        PGDATABASE: ${{ secrets.DEMO_PGDATABASE }}
+        PGUSER:     ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        PGPASSWORD: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        PGHOST:     ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        PGPORT:     ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        PGDATABASE: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
         NETDISCO_HOME: /github/workspace/netdisco2-demo/netdisco2-demo
-        NETDISCO_DB_USER: ${{ secrets.DEMO_PGUSER }}
-        NETDISCO_DB_PASS: ${{ secrets.DEMO_PGPASSWORD }}
-        NETDISCO_DB_HOST: ${{ secrets.DEMO_PGHOST }}
-        NETDISCO_DB_NAME: ${{ secrets.DEMO_PGDATABASE }}
+        NETDISCO_DB_USER: ${{ secrets.DIGITALOCEAN_DEMO_DB_USER }}
+        NETDISCO_DB_PASS: ${{ secrets.DIGITALOCEAN_DEMO_DB_PASS }}
+        NETDISCO_DB_HOST: ${{ secrets.DIGITALOCEAN_DEMO_DB_HOST }}
+        NETDISCO_DB_PORT: ${{ secrets.DIGITALOCEAN_DEMO_DB_PORT }}
+        NETDISCO_DB_NAME: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
       run: |
         curl -LO https://raw.githubusercontent.com/netdisco/netdisco2-demo/refs/heads/master/netdisco2-demo-cumulus-clean.db.sql
         curl -LO https://raw.githubusercontent.com/netdisco/upstream-sources/refs/heads/master/bootstrap/netdisco-lookup-tables.sql
@@ -59,7 +61,7 @@ jobs:
 
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
-      if: always() && github.event.inputs.debug_dbdeploy_enabled == 'true'
+      if: always() && github.event.inputs.debug_enabled == 'true'
       with:
         sudo: true
 
