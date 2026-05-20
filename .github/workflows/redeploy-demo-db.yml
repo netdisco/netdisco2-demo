@@ -84,7 +84,7 @@ jobs:
         PGDATABASE: ${{ secrets.DIGITALOCEAN_DEMO_DB_NAME }}
       run: |
         psql -X -v ON_ERROR_STOP=0 -v ON_ERROR_ROLLBACK=on -d ${{ env.PGDATABASE }} -f netdisco2-demo-snmp-object-data.sql
-        psql -c "ANALYZE"
+        psql -c "VACUUM ANALYZE"
 
     - name: Update statistics
       env:
