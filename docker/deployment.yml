@@ -5,7 +5,7 @@
 # allow environment variables to be used instead
 database: {}
 
-# heroku hosts in https
+# host in https
 session_secure: true
 
 host_groups:
